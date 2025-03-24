@@ -2,13 +2,20 @@
 {
     public class Teacher
     {
-        public int TeacherID { get; set; }
+        public int TeacherId { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string MiddleName { get; set; }
 
-        public int AcademicDegreeID { get; set; }
+        public int AcademicDegreeId { get; set; }
+        public AcademicDegree AcademicDegree { get; set; }
 
-        public int PostID { get; set; }
+        public int StaffId { get; set; }
+        public Staff Staff { get; set; }
 
-        public int CafedraID { get; set; }
-        public Cafedra Cafedra { get; set; }
+        public int DepartmentId { get; set; }
+        public Department Department { get; set; }
+
+        public List<Discipline> Disciplines { get; set; } = new List<Discipline>();
     }
 }
