@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using tverskova.Database;
 
@@ -10,9 +11,11 @@ using tverskova.Database;
 namespace tverskova.Migrations
 {
     [DbContext(typeof(TeacherDbContext))]
-    partial class TeacherDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250325141649_UpdateHeadTeacherRelationship3")]
+    partial class UpdateHeadTeacherRelationship3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -32,14 +35,16 @@ namespace tverskova.Migrations
                     b.Property<int>("HeadTeacherId")
                         .HasColumnType("int");
 
+                    b.Property<int>("HeadTeacherTeacherId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("DepartmentId");
 
-                    b.HasIndex("HeadTeacherId")
-                        .IsUnique();
+                    b.HasIndex("HeadTeacherTeacherId");
 
                     b.ToTable("Departments");
                 });
@@ -186,9 +191,9 @@ namespace tverskova.Migrations
             modelBuilder.Entity("Department", b =>
                 {
                     b.HasOne("tverskova.Models.Teacher", "HeadTeacher")
-                        .WithOne()
-                        .HasForeignKey("Department", "HeadTeacherId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .WithMany()
+                        .HasForeignKey("HeadTeacherTeacherId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("HeadTeacher");

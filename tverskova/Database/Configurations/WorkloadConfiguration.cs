@@ -27,6 +27,12 @@ namespace tverskova.Database.Configurations
                    .WithMany(d => d.Workloads)
                    .HasForeignKey(w => w.DisciplineId)
                    .HasConstraintName($"fk_{TableName}_discipline_id");
+
+            // Внешний ключ - преподаватель
+            builder.HasOne(w => w.Teacher)
+                   .WithMany(t => t.Workloads)
+                   .HasForeignKey(w => w.TeacherId)
+                   .HasConstraintName($"fk_{TableName}_teacher_id");
         }
     }
 }

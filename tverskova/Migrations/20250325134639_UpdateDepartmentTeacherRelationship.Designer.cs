@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using tverskova.Database;
 
@@ -10,9 +11,11 @@ using tverskova.Database;
 namespace tverskova.Migrations
 {
     [DbContext(typeof(TeacherDbContext))]
-    partial class TeacherDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250325134639_UpdateDepartmentTeacherRelationship")]
+    partial class UpdateDepartmentTeacherRelationship
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -20,29 +23,6 @@ namespace tverskova.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Department", b =>
-                {
-                    b.Property<int>("DepartmentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DepartmentId"));
-
-                    b.Property<int>("HeadTeacherId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("DepartmentId");
-
-                    b.HasIndex("HeadTeacherId")
-                        .IsUnique();
-
-                    b.ToTable("Departments");
-                });
 
             modelBuilder.Entity("tverskova.Models.AcademicDegree", b =>
                 {
@@ -63,6 +43,26 @@ namespace tverskova.Migrations
                         .HasName("pk_cd_academic_degree_academic_degree_id");
 
                     b.ToTable("AcademicDegrees");
+                });
+
+            modelBuilder.Entity("tverskova.Models.Department", b =>
+                {
+                    b.Property<int>("DepartmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DepartmentId"));
+
+                    b.Property<int>("HeadTeacherId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("DepartmentId");
+
+                    b.ToTable("Departments");
                 });
 
             modelBuilder.Entity("tverskova.Models.Discipline", b =>
@@ -183,17 +183,6 @@ namespace tverskova.Migrations
                     b.ToTable("Workloads");
                 });
 
-            modelBuilder.Entity("Department", b =>
-                {
-                    b.HasOne("tverskova.Models.Teacher", "HeadTeacher")
-                        .WithOne()
-                        .HasForeignKey("Department", "HeadTeacherId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("HeadTeacher");
-                });
-
             modelBuilder.Entity("tverskova.Models.Teacher", b =>
                 {
                     b.HasOne("tverskova.Models.AcademicDegree", "AcademicDegree")
@@ -203,7 +192,7 @@ namespace tverskova.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_cd_academic_degree_teacher_id");
 
-                    b.HasOne("Department", "Department")
+                    b.HasOne("tverskova.Models.Department", "Department")
                         .WithMany("Teachers")
                         .HasForeignKey("DepartmentId")
                         .OnDelete(DeleteBehavior.NoAction)
@@ -245,12 +234,12 @@ namespace tverskova.Migrations
                     b.Navigation("Teacher");
                 });
 
-            modelBuilder.Entity("Department", b =>
+            modelBuilder.Entity("tverskova.Models.AcademicDegree", b =>
                 {
                     b.Navigation("Teachers");
                 });
 
-            modelBuilder.Entity("tverskova.Models.AcademicDegree", b =>
+            modelBuilder.Entity("tverskova.Models.Department", b =>
                 {
                     b.Navigation("Teachers");
                 });

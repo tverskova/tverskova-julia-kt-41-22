@@ -48,6 +48,18 @@ namespace tverskova.Database.Configurations
                    .HasForeignKey(t => t.DepartmentId)
                    .HasConstraintName($"fk_{TableName}_department_id")
                    .OnDelete(DeleteBehavior.NoAction);
+
+            builder.HasOne<Department>()
+                   .WithOne(d => d.HeadTeacher)
+                   .HasForeignKey<Department>(d => d.HeadTeacherId)
+                   .OnDelete(DeleteBehavior.NoAction);
+
+            builder.HasMany(t => t.Workloads)
+                   .WithOne(w => w.Teacher)
+                   .HasForeignKey(w => w.TeacherId)
+                   .HasConstraintName($"fk_{TableName}_workload_id");
         }
     }
+
+
 }

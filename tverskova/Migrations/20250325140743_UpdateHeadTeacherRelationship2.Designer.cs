@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using tverskova.Database;
 
@@ -10,9 +11,11 @@ using tverskova.Database;
 namespace tverskova.Migrations
 {
     [DbContext(typeof(TeacherDbContext))]
-    partial class TeacherDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250325140743_UpdateHeadTeacherRelationship2")]
+    partial class UpdateHeadTeacherRelationship2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -37,9 +40,6 @@ namespace tverskova.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("DepartmentId");
-
-                    b.HasIndex("HeadTeacherId")
-                        .IsUnique();
 
                     b.ToTable("Departments");
                 });
@@ -147,7 +147,8 @@ namespace tverskova.Migrations
 
                     b.HasIndex("AcademicDegreeId");
 
-                    b.HasIndex("DepartmentId");
+                    b.HasIndex("DepartmentId")
+                        .IsUnique();
 
                     b.HasIndex("StaffId");
 
@@ -183,17 +184,6 @@ namespace tverskova.Migrations
                     b.ToTable("Workloads");
                 });
 
-            modelBuilder.Entity("Department", b =>
-                {
-                    b.HasOne("tverskova.Models.Teacher", "HeadTeacher")
-                        .WithOne()
-                        .HasForeignKey("Department", "HeadTeacherId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("HeadTeacher");
-                });
-
             modelBuilder.Entity("tverskova.Models.Teacher", b =>
                 {
                     b.HasOne("tverskova.Models.AcademicDegree", "AcademicDegree")
@@ -204,8 +194,8 @@ namespace tverskova.Migrations
                         .HasConstraintName("fk_cd_academic_degree_teacher_id");
 
                     b.HasOne("Department", "Department")
-                        .WithMany("Teachers")
-                        .HasForeignKey("DepartmentId")
+                        .WithOne("HeadTeacher")
+                        .HasForeignKey("tverskova.Models.Teacher", "DepartmentId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
                         .HasConstraintName("fk_cd_teacher_department_id");
@@ -247,7 +237,8 @@ namespace tverskova.Migrations
 
             modelBuilder.Entity("Department", b =>
                 {
-                    b.Navigation("Teachers");
+                    b.Navigation("HeadTeacher")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("tverskova.Models.AcademicDegree", b =>

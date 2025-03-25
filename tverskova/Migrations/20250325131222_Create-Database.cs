@@ -24,6 +24,19 @@ namespace tverskova.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Disciplines",
+                columns: table => new
+                {
+                    DisciplineId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    c_discipline_name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false, comment: "Название дисциплины")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_cd_discipline_discipline_id", x => x.DisciplineId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Staffers",
                 columns: table => new
                 {
@@ -87,33 +100,14 @@ namespace tverskova.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Disciplines",
-                columns: table => new
-                {
-                    DisciplineId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    c_discipline_name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false, comment: "Название дисциплины"),
-                    TeacherId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_cd_discipline_discipline_id", x => x.DisciplineId);
-                    table.ForeignKey(
-                        name: "fk_cd_discipline_teacher_id",
-                        column: x => x.TeacherId,
-                        principalTable: "Teachers",
-                        principalColumn: "TeacherId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Workloads",
                 columns: table => new
                 {
                     WorkloadId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     DisciplineId = table.Column<int>(type: "int", nullable: false),
-                    c_workload_hours = table.Column<int>(type: "int", nullable: false, comment: "Количество часов нагрузки по дисциплине")
+                    c_workload_hours = table.Column<int>(type: "int", nullable: false, comment: "Количество часов нагрузки по дисциплине"),
+                    TeacherId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -124,17 +118,18 @@ namespace tverskova.Migrations
                         principalTable: "Disciplines",
                         principalColumn: "DisciplineId",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "fk_cd_workload_teacher_id",
+                        column: x => x.TeacherId,
+                        principalTable: "Teachers",
+                        principalColumn: "TeacherId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Departments_HeadTeacherTeacherId",
                 table: "Departments",
                 column: "HeadTeacherTeacherId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Disciplines_TeacherId",
-                table: "Disciplines",
-                column: "TeacherId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Teachers_AcademicDegreeId",
@@ -155,6 +150,11 @@ namespace tverskova.Migrations
                 name: "IX_Workloads_DisciplineId",
                 table: "Workloads",
                 column: "DisciplineId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Workloads_TeacherId",
+                table: "Workloads",
+                column: "TeacherId");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Departments_Teachers_HeadTeacherTeacherId",

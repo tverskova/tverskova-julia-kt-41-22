@@ -20,14 +20,14 @@ namespace tverskova.Database.Configurations
                    .IsRequired()
                    .HasColumnName("c_department_name")
                    .HasColumnType("nvarchar")
-                   .HasMaxLength(200)
-                   .HasComment("Название кафедры");
+                   .HasMaxLength(200);
 
             builder.HasOne(d => d.HeadTeacher)
-                   .WithMany()
-                   .HasForeignKey(d => d.HeadTeacherId)
+                   .WithOne() 
+                   .HasForeignKey<Department>(d => d.HeadTeacherId) 
                    .HasConstraintName($"fk_{TableName}_head_teacher_id")
                    .OnDelete(DeleteBehavior.NoAction);
+
         }
     }
 }

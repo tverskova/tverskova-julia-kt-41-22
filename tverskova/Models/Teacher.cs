@@ -12,10 +12,10 @@
 
         public int StaffId { get; set; }
         public Staff Staff { get; set; }
-
+            
         public int DepartmentId { get; set; }
         public Department Department { get; set; }
 
-        public List<Discipline> Disciplines { get; set; } = new List<Discipline>();
+        public ICollection<Workload> Workloads { get; set; } = new List<Workload>();
     }
 }
