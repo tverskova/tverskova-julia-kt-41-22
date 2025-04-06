@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using NLog;
 using NLog.Web;
 using tverskova.Database;
+using static tverskova.ServiceExtensions.ServiceExtensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<TeacherDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddServices();
 
 var app = builder.Build();
 
