@@ -7,12 +7,12 @@ namespace tverskova.Database
 {
     public class TeacherDbContext : DbContext
     {
-        DbSet<Teacher> Teachers { get; set; }
-        DbSet<Discipline> Disciplines { get; set; }
-        DbSet<AcademicDegree> AcademicDegrees { get; set; }
-        DbSet<Department> Departments { get; set; }
-        DbSet<Staff> Staffers { get; set; }
-        DbSet<Workload> Workloads { get; set; }
+        public DbSet<Teacher> Teachers { get; set; }
+        public DbSet<Discipline> Disciplines { get; set; }
+        public DbSet<AcademicDegree> AcademicDegrees { get; set; }
+        public DbSet<Department> Departments { get; set; }
+        public DbSet<Staff> Staffers { get; set; }
+        public DbSet<Workload> Workloads { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
