@@ -1,16 +1,21 @@
 ﻿using tverskova.Database;
+using tverskova.Filters.TeacherFilters;
 using tverskova.Models;
 using Microsoft.EntityFrameworkCore;
-using tverskova.Filters.TeacherFilters;
 
 namespace tverskova.Interfaces.TeacherInterfaces
 {
     public interface ITeacherService
     {
+        Task<Teacher[]> GetTeacherAsync(CancellationToken cancellationToken);
+        Task<Teacher> GetTeacherByIdAsync(int id, CancellationToken cancellationToken);
         Task<Teacher[]> GetTeacherByDepartmentAsync(TeacherFilter filter, CancellationToken cancellationToken);
-        Task<Teacher> AddTeacherAsync(Teacher teacher, CancellationToken cancellationToken);
-        Task<Teacher> UpdateTeacherAsync(int teacherId, Teacher teacher, CancellationToken cancellationToken);
-        Task<bool> DeleteTeacherAsync(int teacherId, CancellationToken cancellationToken);
+        Task<Teacher[]> GetTeacherByAcademicDegreeAsync(TeacherFilter filter, CancellationToken cancellationToken);
+        Task<Teacher[]> GetTeacherByStaffAsync(TeacherFilter filter, CancellationToken cancellationToken);
+
+        Task AddTeacherAsync(Teacher teacher, CancellationToken cancellationToken);
+        Task UpdateTeacherAsync(Teacher teacher, CancellationToken cancellationToken);
+        Task DeleteTeacherAsync(Teacher teacher, CancellationToken cancellationToken);
     }
 
     public class TeacherService : ITeacherService
@@ -22,7 +27,22 @@ namespace tverskova.Interfaces.TeacherInterfaces
             _dbContext = dbContext;
         }
 
-        public Task<Teacher[]> GetTeacherByDepartmentAsync(TeacherFilter filter, CancellationToken cancellationToken = default)
+        // Получение всех преподавателей
+        public async Task<Teacher[]> GetTeacherAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Teachers
+                                   .ToArrayAsync(cancellationToken);
+        }
+
+        // Получение преподавателя по ID
+        public async Task<Teacher>? GetTeacherByIdAsync(int id, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Teachers
+                       .FirstOrDefaultAsync(d => d.TeacherId == id, cancellationToken);
+        }
+
+        // Получение преподавателей по кафедре
+        public async Task<Teacher[]> GetTeacherByDepartmentAsync(TeacherFilter filter, CancellationToken cancellationToken = default)
         {
             var teachers = _dbContext.Teachers
                 .Include(t => t.Department)
@@ -35,35 +55,50 @@ namespace tverskova.Interfaces.TeacherInterfaces
                 teachers = teachers.Where(t => t.Department.Name == filter.DepartmentName);
             }
 
-            if (filter.AcademicDegreeId.HasValue)
-            {
-                teachers = teachers.Where(t => t.AcademicDegreeId == filter.AcademicDegreeId.Value);
-            }
+            return await teachers.ToArrayAsync(cancellationToken);
+        }
+
+        // Получение преподавателей по академической степени
+        public async Task<Teacher[]> GetTeacherByAcademicDegreeAsync(TeacherFilter filter, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Teachers
+                .Where(t => t.AcademicDegreeId == filter.AcademicDegreeId)  
+                .ToArrayAsync(cancellationToken);
+        }
+
+        // Получение преподавателей по должности
+        public async Task<Teacher[]> GetTeacherByStaffAsync(TeacherFilter filter, CancellationToken cancellationToken = default)
+        {
+            var teachers = _dbContext.Teachers
+                .Include(t => t.Staff)
+                .Include(t => t.Department)
+                .Include(t => t.AcademicDegree)
+                .AsQueryable();
 
             if (filter.StaffId.HasValue)
             {
                 teachers = teachers.Where(t => t.StaffId == filter.StaffId.Value);
             }
 
-            return teachers.ToArrayAsync(cancellationToken);
+            return await teachers.ToArrayAsync(cancellationToken);
         }
 
         // Добавление преподавателя
-        public async Task<Teacher> AddTeacherAsync(Teacher teacher, CancellationToken cancellationToken)
+        public async Task AddTeacherAsync(Teacher teacher, CancellationToken cancellationToken = default)
         {
             _dbContext.Teachers.Add(teacher);
             await _dbContext.SaveChangesAsync(cancellationToken);
-            return teacher;
         }
 
-        // Изменение преподавателя
-        public async Task<Teacher> UpdateTeacherAsync(int teacherId, Teacher teacher, CancellationToken cancellationToken)
+        // Обновление преподавателя
+        public async Task UpdateTeacherAsync(Teacher teacher, CancellationToken cancellationToken = default)
         {
-            var existingTeacher = await _dbContext.Teachers.FindAsync(new object[] { teacherId }, cancellationToken);
+            var existingTeacher = await _dbContext.Teachers.FindAsync(new object[] { teacher.TeacherId }, cancellationToken);
             if (existingTeacher == null)
-                return null; // или можно выбросить исключение, если преподаватель не найден
+            {
+                throw new KeyNotFoundException($"Teacher with ID {teacher.TeacherId} not found.");
+            }
 
-            // Обновляем свойства преподавателя
             existingTeacher.FirstName = teacher.FirstName;
             existingTeacher.LastName = teacher.LastName;
             existingTeacher.MiddleName = teacher.MiddleName;
@@ -72,19 +107,19 @@ namespace tverskova.Interfaces.TeacherInterfaces
             existingTeacher.DepartmentId = teacher.DepartmentId;
 
             await _dbContext.SaveChangesAsync(cancellationToken);
-            return existingTeacher;
         }
 
         // Удаление преподавателя
-        public async Task<bool> DeleteTeacherAsync(int teacherId, CancellationToken cancellationToken)
+        public async Task DeleteTeacherAsync(Teacher teacher, CancellationToken cancellationToken = default)
         {
-            var teacher = await _dbContext.Teachers.FindAsync(new object[] { teacherId }, cancellationToken);
-            if (teacher == null)
-                return false;
+            var existingTeacher = await _dbContext.Teachers.FindAsync(new object[] { teacher.TeacherId }, cancellationToken);
+            if (existingTeacher == null)
+            {
+                throw new KeyNotFoundException($"Teacher with ID {teacher.TeacherId} not found.");
+            }
 
-            _dbContext.Teachers.Remove(teacher);
+            _dbContext.Teachers.Remove(existingTeacher);
             await _dbContext.SaveChangesAsync(cancellationToken);
-            return true;
         }
     }
 }
