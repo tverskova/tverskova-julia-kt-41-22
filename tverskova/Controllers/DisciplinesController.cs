@@ -7,8 +7,7 @@ using System.Threading.Tasks;
 
 namespace tverskova.Controllers
 {
-
-        [ApiController]
+    [ApiController]
     [Route("[controller]")]
     public class DisciplinesController : ControllerBase
     {
@@ -19,7 +18,7 @@ namespace tverskova.Controllers
             _disciplineService = disciplineService;
         }
 
-        // GET: api/Disciplines
+        // GET: ВСЕ 
         [HttpGet]
         public async Task<ActionResult<Discipline[]>> GetDisciplines(CancellationToken cancellationToken)
         {
@@ -27,7 +26,7 @@ namespace tverskova.Controllers
             return Ok(disciplines);
         }
 
-        // GET: api/Disciplines/5
+        // GET: по ID 
         [HttpGet("{id}")]
         public async Task<ActionResult<Discipline>> GetDiscipline(int id, CancellationToken cancellationToken)
         {
@@ -41,7 +40,7 @@ namespace tverskova.Controllers
             return Ok(discipline);
         }
 
-        // GET: api/Disciplines/ByTeacher/5
+        // GET: ByTeacher
         [HttpGet("ByTeacher/{teacherId}")]
         public async Task<ActionResult<Discipline[]>> GetDisciplinesByTeacherId(int teacherId, CancellationToken cancellationToken)
         {
@@ -55,7 +54,7 @@ namespace tverskova.Controllers
             return Ok(disciplines);
         }
 
-        // GET: api/Disciplines/ByWorkloadRange?min=20&max=30
+        // GET: ByWorkload
         [HttpGet("ByWorkloadRange")]
         public async Task<ActionResult<Discipline[]>> GetDisciplinesByWorkloadRange([FromQuery] int min, [FromQuery] int max, CancellationToken cancellationToken)
         {
@@ -69,16 +68,7 @@ namespace tverskova.Controllers
             return Ok(disciplines);
         }
 
-        // POST: api/Disciplines
-        [HttpPost]
-        public async Task<ActionResult<Discipline>> PostDiscipline([FromBody] Discipline discipline, CancellationToken cancellationToken)
-        {
-            await _disciplineService.AddDisciplineAsync(discipline, cancellationToken);
-
-            return CreatedAtAction(nameof(GetDiscipline), new { id = discipline.DisciplineId }, discipline);
-        }
-
-        // PUT: api/Disciplines/5
+        // PUT: update
         [HttpPut("{id}")]
         public async Task<IActionResult> PutDiscipline(int id, [FromBody] Discipline discipline, CancellationToken cancellationToken)
         {
@@ -98,7 +88,7 @@ namespace tverskova.Controllers
             return NoContent();
         }
 
-        // DELETE: api/Disciplines/5
+        // DELETE
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDiscipline(int id, CancellationToken cancellationToken)
         {
@@ -112,7 +102,14 @@ namespace tverskova.Controllers
 
             return NoContent();
         }
-        
 
+        // ADD
+        [HttpPost]
+        public async Task<ActionResult<Discipline>> PostDiscipline([FromBody] Discipline discipline, CancellationToken cancellationToken)
+        {
+            await _disciplineService.AddDisciplineAsync(discipline, cancellationToken);
+
+            return CreatedAtAction(nameof(GetDiscipline), new { id = discipline.DisciplineId }, discipline);
+        }
     }
 }

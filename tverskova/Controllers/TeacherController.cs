@@ -12,47 +12,40 @@ namespace tverskova.Controllers
     [Route("[controller]")]
     public class TeacherController : ControllerBase
     {
-        private readonly ILogger<TeacherController> _logger;
         private readonly ITeacherService _teacherService;
 
-        public TeacherController(ILogger<TeacherController> logger, ITeacherService teacherService)
+        public TeacherController(ITeacherService teacherService)
         {
-            _logger = logger;
             _teacherService = teacherService;
         }
 
-        // GET: api/Teacher/get
-        [HttpPost("get")]
-        public async Task<IActionResult> GetTeacherAsync(CancellationToken cancellationToken = default)
+        // GET: ВСЕ 
+        [HttpGet]
+        public async Task<ActionResult<Teacher[]>> GetTeacher(CancellationToken cancellationToken)
         {
-            var teachers = await _teacherService.GetTeacherAsync(cancellationToken);
-            if (teachers == null || teachers.Length == 0)
-            {
-                return NotFound("No teachers found.");
-            }
-
-            return Ok(teachers);
+            var teacher = await _teacherService.GetTeacherAsync(cancellationToken);
+            return Ok(teacher);
         }
 
-        // GET: api/Teacher/getById/{id}
+
+        // GET: по ID 
         [HttpGet("getById/{id}")]
-        public async Task<IActionResult> GetTeacherByIdAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetTeacherByIdAsync(int id, CancellationToken cancellationToken)
         {
             var teacher = await _teacherService.GetTeacherByIdAsync(id, cancellationToken);
             if (teacher == null)
             {
-                return NotFound($"Teacher with ID {id} not found.");
+                return NotFound();
             }
 
             return Ok(teacher);
         }
 
-        // GET: api/Teacher/getByDepartment/{departmentId}
-        [HttpGet("getByDepartment/{departmentId}")]
-        public async Task<IActionResult> GetTeacherByDepartmentAsync(int departmentId, CancellationToken cancellationToken = default)
+        // GET: ByDepartment
+        [HttpGet("ByDepartment/{departmentId}")]
+        public async Task<ActionResult<Teacher[]>> GetTeacherByDepartmentAsync(int departmentId, CancellationToken cancellationToken)
         {
-            var filter = new TeacherFilter { DepartmentId = departmentId };
-            var teachers = await _teacherService.GetTeacherByDepartmentAsync(filter, cancellationToken);
+            var teachers = await _teacherService.GetTeacherByDepartmentAsync(departmentId, cancellationToken);
             if (teachers == null || teachers.Length == 0)
             {
                 return NotFound($"No teachers found in the department with ID {departmentId}.");
@@ -61,7 +54,7 @@ namespace tverskova.Controllers
             return Ok(teachers);
         }
 
-        // GET: api/Disciplines/ByWorkloadRange?min=20&max=30
+        // GET: ByWorkload
         [HttpGet("ByAcademicDegree")]
         public async Task<ActionResult<Teacher[]>> GetTeacherByAcademicDegreeAsync([FromQuery] int AcademicDegreeId, CancellationToken cancellationToken)
         {
@@ -75,12 +68,11 @@ namespace tverskova.Controllers
             return Ok(teachers);
         }
 
-        // GET: api/Teacher/getByStaff/{staffId}
+        // GET: ByStaff
         [HttpGet("getByStaff/{staffId}")]
-        public async Task<IActionResult> GetTeacherByStaffAsync(int staffId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetTeacherByStaffAsync(int staffId, CancellationToken cancellationToken)
         {
-            var filter = new TeacherFilter { StaffId = staffId };
-            var teachers = await _teacherService.GetTeacherByStaffAsync(filter, cancellationToken);
+            var teachers = await _teacherService.GetTeacherByStaffAsync(staffId, cancellationToken);
             if (teachers == null || teachers.Length == 0)
             {
                 return NotFound($"No teachers found with staff ID {staffId}.");
@@ -89,35 +81,46 @@ namespace tverskova.Controllers
             return Ok(teachers);
         }
 
-        // POST: api/Teacher/add
-        [HttpPost("add")]
-        public async Task<IActionResult> AddTeacherAsync([FromBody] Teacher teacher, CancellationToken cancellationToken = default)
-        {
-            await _teacherService.AddTeacherAsync(teacher, cancellationToken);
-            return CreatedAtAction(nameof(GetTeacherByIdAsync), new { id = teacher.TeacherId }, teacher);
-        }
-
-        // PUT: api/Teacher/update/{id}
+        // PUT: update
         [HttpPut("update/{id}")]
-        public async Task<IActionResult> UpdateTeacherAsync(int id, [FromBody] Teacher teacher, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateTeacherAsync(int id, [FromBody] Teacher teacher, CancellationToken cancellationToken)
         {
-            teacher.TeacherId = id; // Убедитесь, что ID преподавателя правильный при обновлении
+            if (id != teacher.TeacherId)
+            {
+                return BadRequest("ID in route and in body do not match");
+            }
+
+            var existingTeacher = await _teacherService.GetTeacherByIdAsync(id, cancellationToken);
+            if (existingTeacher == null)
+            {
+                return NotFound();
+            }
+
             await _teacherService.UpdateTeacherAsync(teacher, cancellationToken);
-            return Ok(new { message = "Teacher successfully updated." });
+
+            return NoContent();
         }
 
-        // DELETE: api/Teacher/delete/{teacherId}
+        // DELETE
         [HttpDelete("delete/{teacherId}")]
-        public async Task<IActionResult> DeleteTeacherAsync(int teacherId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> DeleteTeacherAsync(int teacherId, CancellationToken cancellationToken)
         {
             var teacher = await _teacherService.GetTeacherByIdAsync(teacherId, cancellationToken);
             if (teacher == null)
             {
-                return NotFound($"Teacher with ID {teacherId} not found.");
+                return NotFound();
             }
 
             await _teacherService.DeleteTeacherAsync(teacher, cancellationToken);
-            return Ok(new { message = "Teacher successfully deleted." });
+            return NoContent();
         }
+
+        // ADD
+        [HttpPost]
+        public async Task<IActionResult> AddTeacherAsync([FromBody] Teacher teacher, CancellationToken cancellationToken)
+        {
+            await _teacherService.AddTeacherAsync(teacher, cancellationToken);
+            return CreatedAtAction(nameof(GetTeacherByIdAsync), new { id = teacher.TeacherId }, teacher);
+        }                 
     }
 }

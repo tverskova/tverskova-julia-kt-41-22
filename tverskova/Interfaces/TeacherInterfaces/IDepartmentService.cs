@@ -2,15 +2,19 @@
 using tverskova.Filters.TeacherFilters;
 using tverskova.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace tverskova.Interfaces.TeacherInterfaces
 {
     public interface IDepartmentService
     {
-        Task<Department[]> GetDepartmentAsync(DepartmentFilter filter, CancellationToken cancellationToken);
+        Task<Department[]> GetDepartmentAsync(CancellationToken cancellationToken);
+        Task<Department> GetDepartmentByIdAsync(int id, CancellationToken cancellationToken);
+        Task<Department[]> GetDepartmentByDateOfFoundingAsync(DateTime dateoffound, CancellationToken cancellationToken);
+        Task<Department[]> GetDepartmentByTeacherCountAsync(int teacherCount, CancellationToken cancellationToken);
         Task AddDepartmentAsync(Department department, CancellationToken cancellationToken);
         Task UpdateDepartmentAsync(Department department, CancellationToken cancellationToken);
-        Task DeleteDepartmentAsync(int departmentId, CancellationToken cancellationToken);
+        Task DeleteDepartmentAsync(Department department, CancellationToken cancellationToken);
     }
 
     public class DepartmentService : IDepartmentService
@@ -22,42 +26,36 @@ namespace tverskova.Interfaces.TeacherInterfaces
             _dbContext = dbContext;
         }
 
-        public async Task<Department[]> GetDepartmentAsync(DepartmentFilter filter, CancellationToken cancellationToken)
+        public async Task<Department[]> GetDepartmentAsync(CancellationToken cancellationToken = default)
         {
-            var departments = _dbContext.Departments
-                .Include(d => d.HeadTeacher)
-                .Include(d => d.Teachers)
-                .AsQueryable();
-
-            // Применение фильтров
-            if (filter.MinDateOfFoundation.HasValue)
-            {
-                departments = departments.Where(d => d.DateOfFoundation >= filter.MinDateOfFoundation.Value);
-            }
-
-            if (filter.MaxDateOfFoundation.HasValue)
-            {
-                departments = departments.Where(d => d.DateOfFoundation <= filter.MaxDateOfFoundation.Value);
-            }
-
-            if (filter.MinTeachersCount.HasValue)
-            {
-                departments = departments.Where(d => d.Teachers.Count >= filter.MinTeachersCount.Value);
-            }
-
-            if (filter.MaxTeachersCount.HasValue)
-            {
-                departments = departments.Where(d => d.Teachers.Count <= filter.MaxTeachersCount.Value);
-            }
-
-            if (filter.HeadTeacherId.HasValue)
-            {
-                departments = departments.Where(d => d.HeadTeacherId == filter.HeadTeacherId.Value);
-            }
-
-            return await departments.ToArrayAsync(cancellationToken);
+            return await _dbContext.Departments
+                                   .ToArrayAsync(cancellationToken);
         }
 
+        public async Task<Department?> GetDepartmentByIdAsync(int id, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Departments
+                       .FirstOrDefaultAsync(d => d.DepartmentId == id, cancellationToken);
+        }
+
+        public async Task<Department[]> GetDepartmentByDateOfFoundingAsync(DateTime dateoffound, CancellationToken cancellationToken)
+        {
+            return await _dbContext.Departments
+                .Where(d => d.DateOfFoundation.Date == dateoffound.Date)
+                .Include(d => d.HeadTeacher)
+                .ToArrayAsync(cancellationToken);
+        }
+
+        public async Task<Department[]> GetDepartmentByTeacherCountAsync(int teacherCount, CancellationToken cancellationToken)
+        {
+            return await _dbContext.Departments
+               .Where(d => _dbContext.Teachers.Count(t => t.DepartmentId == d.DepartmentId) == teacherCount)
+               .Include(d => d.HeadTeacher)
+               .ToArrayAsync(cancellationToken);
+        }     
+
+
+        // Add, Remove, Update
         public async Task AddDepartmentAsync(Department department, CancellationToken cancellationToken)
         {
             _dbContext.Departments.Add(department);
@@ -70,19 +68,10 @@ namespace tverskova.Interfaces.TeacherInterfaces
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task DeleteDepartmentAsync(int departmentId, CancellationToken cancellationToken)
+        public async Task DeleteDepartmentAsync(Department department, CancellationToken cancellationToken)
         {
-            var department = await _dbContext.Departments
-                .Include(d => d.Teachers)
-                .FirstOrDefaultAsync(d => d.DepartmentId == departmentId, cancellationToken);
-
-            if (department != null)
-            {
-                _dbContext.Teachers.RemoveRange(department.Teachers);
-                _dbContext.Departments.Remove(department);
-                await _dbContext.SaveChangesAsync(cancellationToken);
-            }
+            _dbContext.Departments.Remove(department);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
     }
-
 }

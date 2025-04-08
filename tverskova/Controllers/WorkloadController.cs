@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using tverskova.Interfaces.TeacherInterfaces;
-using tverskova.Filters.TeacherFilters;
 using tverskova.Models;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,67 +10,119 @@ namespace tverskova.Controllers
     [Route("[controller]")]
     public class WorkloadController : ControllerBase
     {
-        private readonly ILogger<WorkloadController> _logger;
         private readonly IWorkloadService _workloadService;
 
-        public WorkloadController(ILogger<WorkloadController> logger, IWorkloadService workloadService)
+        public WorkloadController(IWorkloadService workloadService)
         {
-            _logger = logger;
             _workloadService = workloadService;
         }
 
-        // Получение списка нагрузки
-        [HttpPost(Name = "GetWorkload")]
-        public async Task<IActionResult> GetWorkloadAsync(WorkloadFilter filter, CancellationToken cancellationToken = default)
+        // GET: ВСЕ
+        [HttpGet]
+        public async Task<ActionResult<Workload[]>> GetWorkloads(CancellationToken cancellationToken)
         {
-            var workloads = await _workloadService.GetWorkloadAsync(filter, cancellationToken);
+            var workloads = await _workloadService.GetWorkloadAsync(cancellationToken);
             return Ok(workloads);
         }
 
-        // Добавление новой нагрузки
-        [HttpPost("add")]
-        public async Task<IActionResult> AddWorkloadAsync([FromBody] Workload workload, CancellationToken cancellationToken = default)
+        // GET: по ID
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Workload>> GetWorkload(int id, CancellationToken cancellationToken)
         {
+            var workload = await _workloadService.GetWorkloadByIdAsync(id, cancellationToken);
+
             if (workload == null)
             {
-                return BadRequest("Нагрузка не может быть нулевой.");
+                return NotFound();
             }
 
-            try
-            {
-                var addedWorkload = await _workloadService.AddWorkloadAsync(workload, cancellationToken);
-                return Ok(new { message = "Нагрузка успешно добавлена.", workload = addedWorkload });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Ошибка");
-                return StatusCode(500, new { message = "Ошибка" });
-            }
+            return Ok(workload);
         }
 
-        // Обновление нагрузки
-        [HttpPut("update/{workloadId}")]
-        public async Task<IActionResult> UpdateWorkloadAsync(int workloadId, [FromBody] Workload updatedWorkload, CancellationToken cancellationToken = default)
+        // GET: по TeacherId
+        [HttpGet("ByTeacher/{teacherId}")]
+        public async Task<ActionResult<Workload[]>> GetWorkloadsByTeacherId(int teacherId, CancellationToken cancellationToken)
         {
-            if (updatedWorkload == null)
+            var workloads = await _workloadService.GetWorkloadByTeacherIdAsync(teacherId, cancellationToken);
+
+            if (workloads == null || workloads.Length == 0)
             {
-                return BadRequest("Некорректное значение");
+                return NotFound($"No workloads found for teacher with ID {teacherId}");
             }
 
-            try
+            return Ok(workloads);
+        }
+
+        // GET: по DepartmentId
+        [HttpGet("ByDepartment/{departmentId}")]
+        public async Task<ActionResult<Workload[]>> GetWorkloadsByDepartmentId(int departmentId, CancellationToken cancellationToken)
+        {
+            var workloads = await _workloadService.GetWorkloadByDepartmentIdAsync(departmentId, cancellationToken);
+
+            if (workloads == null || workloads.Length == 0)
             {
-                var updated = await _workloadService.UpdateWorkloadAsync(workloadId, updatedWorkload, cancellationToken);
-                return Ok(new { message = "Нагрузка успешно обновлена.", workload = updated });
+                return NotFound($"No workloads found for department with ID {departmentId}");
             }
-            catch (KeyNotFoundException ex)
+
+            return Ok(workloads);
+        }
+
+        // GET: по DisciplineId
+        [HttpGet("ByDiscipline/{disciplineId}")]
+        public async Task<ActionResult<Workload[]>> GetWorkloadsByDisciplinesId(int disciplineId, CancellationToken cancellationToken)
+        {
+            var workloads = await _workloadService.GetWorkloadByDisciplinesIdAsync(disciplineId, cancellationToken);
+
+            if (workloads == null || workloads.Length == 0)
             {
-                return NotFound(new { message = ex.Message });
+                return NotFound($"No workloads found for discipline with ID {disciplineId}");
             }
-            catch (Exception ex)
+
+            return Ok(workloads);
+        }
+
+        // PUT: update
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutWorkload(int id, [FromBody] Workload workload, CancellationToken cancellationToken)
+        {
+            if (id != workload.WorkloadId)
             {
-                _logger.LogError(ex, "Ошибка");
-                return StatusCode(500, new { message = "Ошибка" });
+                return BadRequest("ID in route and in body do not match");
             }
+
+            var existingWorkload = await _workloadService.GetWorkloadByIdAsync(id, cancellationToken);
+            if (existingWorkload == null)
+            {
+                return NotFound();
+            }
+
+            await _workloadService.UpdateWorkloadAsync(workload, cancellationToken);
+
+            return NoContent();
+        }
+
+        // DELETE
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteWorkload(int id, CancellationToken cancellationToken)
+        {
+            var workload = await _workloadService.GetWorkloadByIdAsync(id, cancellationToken);
+            if (workload == null)
+            {
+                return NotFound();
+            }
+
+            await _workloadService.DeleteWorkloadAsync(workload, cancellationToken);
+
+            return NoContent();
+        }
+
+        // ADD
+        [HttpPost]
+        public async Task<ActionResult<Workload>> PostWorkload([FromBody] Workload workload, CancellationToken cancellationToken)
+        {
+            await _workloadService.AddWorkloadAsync(workload, cancellationToken);
+
+            return CreatedAtAction(nameof(GetWorkload), new { id = workload.WorkloadId }, workload);
         }
     }
 }

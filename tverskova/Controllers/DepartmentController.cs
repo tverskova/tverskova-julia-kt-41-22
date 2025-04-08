@@ -9,52 +9,106 @@ namespace tverskova.Controllers
     [Route("[controller]")]
     public class DepartmentController : ControllerBase
     {
-        private readonly ILogger<DepartmentController> _logger;
         private readonly IDepartmentService _departmentService;
 
-        public DepartmentController(ILogger<DepartmentController> logger, IDepartmentService departmentService)
+        public DepartmentController(IDepartmentService departmentService)
         {
-            _logger = logger;
             _departmentService = departmentService;
         }
 
-        [HttpPost("get")]
-        public async Task<IActionResult> GetDepartmentAsync([FromBody] DepartmentFilter filter, CancellationToken cancellationToken = default)
+        // GET: ВСЕ 
+        [HttpGet]
+        public async Task<ActionResult<Department[]>> GetDepartment(CancellationToken cancellationToken)
         {
-            // Применяем значения по умолчанию, если фильтры null
-            filter.MinDateOfFoundation ??= DateTime.MinValue;  // Устанавливаем минимальную дату, если фильтр не передан
-            filter.MaxDateOfFoundation ??= DateTime.MaxValue;  // Устанавливаем максимальную дату, если фильтр не передан
-            filter.MinTeachersCount ??= 0;  // Устанавливаем минимальное количество преподавателей, если фильтр не передан
-            filter.MaxTeachersCount ??= int.MaxValue;  // Устанавливаем максимальное количество преподавателей, если фильтр не передан
-            filter.HeadTeacherId ??= null;  // Если нет фильтра для HeadTeacherId, оставляем null
-
-            var departments = await _departmentService.GetDepartmentAsync(filter, cancellationToken);
-            return Ok(departments);
+            var department = await _departmentService.GetDepartmentAsync(cancellationToken);
+            return Ok(department);
         }
 
-        // Добавление, обновление и удаление кафедры (методы не меняются)
-    
+        // GET: по ID 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Department>> GetDepartment(int id, CancellationToken cancellationToken)
+        {
+            var department = await _departmentService.GetDepartmentByIdAsync(id, cancellationToken);
+
+            if (department == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(department);
+        }
+
+        // GET: ByDateOfFoundation
+        [HttpGet("ByDateOfFoundation/{dateoffound}")]
+        public async Task<ActionResult<Department[]>> GetDepartmentByDateOfFoundingAsync(DateTime dateoffound, CancellationToken cancellationToken)
+        {
+            var department = await _departmentService.GetDepartmentByDateOfFoundingAsync(dateoffound, cancellationToken);
+
+            if (department == null || department.Length == 0)
+            {
+                return NotFound();
+            }
+
+            return Ok(department);
+        }
+
+        // GET: ByTeacherCount
+        [HttpGet("ByTeacherCount/{TeacherCount}")]
+        public async Task<ActionResult<Department[]>> GetDepartmentByTeacherCountAsync(int teacherCount, CancellationToken cancellationToken)
+        {
+            var department = await _departmentService.GetDepartmentByTeacherCountAsync(teacherCount, cancellationToken);
+
+            if (department == null || department.Length == 0)
+            {
+                return NotFound();
+            }
+
+            return Ok(department);
+        }
 
 
-    [HttpPost("add")]
-        public async Task<IActionResult> AddDepartmentAsync([FromBody] Department department, CancellationToken cancellationToken = default)
+        // PUT: update
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutDepartment(int id, [FromBody] Department department, CancellationToken cancellationToken)
+        {
+            if (id != department.DepartmentId)
+            {
+                return BadRequest("ID in route and in body do not match");
+            }
+
+            var existingDepartment = await _departmentService.GetDepartmentByIdAsync(id, cancellationToken);
+            if (existingDepartment == null)
+            {
+                return NotFound();
+            }
+
+            await _departmentService.UpdateDepartmentAsync(department, cancellationToken);
+
+            return NoContent();
+        }
+
+        // DELETE
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteDepartment(int id, CancellationToken cancellationToken)
+        {
+            var department = await _departmentService.GetDepartmentByIdAsync(id, cancellationToken);
+            if (department == null)
+            {
+                return NotFound();
+            }
+
+            await _departmentService.DeleteDepartmentAsync(department, cancellationToken);
+
+            return NoContent();
+        }
+
+        // ADD
+        [HttpPost]
+        public async Task<ActionResult<Department>> PostDepartment([FromBody] Department department, CancellationToken cancellationToken)
         {
             await _departmentService.AddDepartmentAsync(department, cancellationToken);
-            return Ok(new { message = "Кафедра успешно добавлена." });
-        }
 
-        [HttpPut("update")]
-        public async Task<IActionResult> UpdateDepartmentAsync([FromBody] Department department, CancellationToken cancellationToken = default)
-        {
-            await _departmentService.UpdateDepartmentAsync(department, cancellationToken);
-            return Ok(new { message = "Кафедра успешно обновлена." });
-        }
-
-        [HttpDelete("delete/{departmentId}")]
-        public async Task<IActionResult> DeleteDepartmentAsync(int departmentId, CancellationToken cancellationToken = default)
-        {
-            await _departmentService.DeleteDepartmentAsync(departmentId, cancellationToken);
-            return Ok(new { message = "Кафедра и связанные преподаватели удалены." });
+            return CreatedAtAction(nameof(GetDepartment), new { id = department.DepartmentId }, department);
         }
     }
 }

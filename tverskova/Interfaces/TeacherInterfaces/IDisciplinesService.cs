@@ -10,10 +10,10 @@ namespace tverskova.Interfaces.TeacherInterfaces
         Task<Discipline[]> GetDisciplinesAsync(CancellationToken cancellationToken);
         Task<Discipline> GetDisciplineByIdAsync(int id, CancellationToken cancellationToken);
         Task<Discipline[]> GetDisciplinesByTeacherIdAsync(int teacherId, CancellationToken cancellationToken);
+        Task<Discipline[]> GetDisciplinesByWorkloadRangeAsync(int minHours, int maxHours, CancellationToken cancellationToken);
         Task AddDisciplineAsync(Discipline discipline, CancellationToken cancellationToken);
         Task UpdateDisciplineAsync(Discipline discipline, CancellationToken cancellationToken);
-        Task DeleteDisciplineAsync(Discipline discipline, CancellationToken cancellationToken);
-        Task<Discipline[]> GetDisciplinesByWorkloadRangeAsync(int minHours, int maxHours, CancellationToken cancellationToken);
+        Task DeleteDisciplineAsync(Discipline discipline, CancellationToken cancellationToken);      
 
     }
 
@@ -63,7 +63,6 @@ namespace tverskova.Interfaces.TeacherInterfaces
             _dbContext.Disciplines.Add(discipline);
             await _dbContext.SaveChangesAsync(cancellationToken);
         }       
-
 
         // Обновление дисциплины
         public async Task UpdateDisciplineAsync(Discipline discipline, CancellationToken cancellationToken = default)
